@@ -4,7 +4,7 @@ services:
       
   api:
     build: ./api
-    container_name: "api"
+    container_name: "${PROJECT_NAME}-api"
     ports:
       - 3000:3000
     environment:
@@ -12,6 +12,7 @@ services:
       POSTGRES_DATABASE: "postgres"
       POSTGRES_PASSWORD:
       POSTGRES_HOST: db
+      JWT_SECRET:
     volumes:
       - ./api/src:/usr/app/src
     depends_on:
@@ -22,7 +23,7 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: "frontend"
+    container_name: "${PROJECT_NAME}-frontend"
     ports:
       - 3001:3001
     environment:
@@ -37,6 +38,7 @@ services:
 
   db:
     image: "postgres:latest"
+    container_name: "${PROJECT_NAME}-db"
     ports:
       - 5432:5432
     environment:
