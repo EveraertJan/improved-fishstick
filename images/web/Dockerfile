@@ -14,7 +14,7 @@ COPY . .
 
 # Set API URL to production domain
 ARG DOMAIN=tastbaar.studio
-ENV REACT_APP_API_URL=https://api.${DOMAIN}
+ENV REACT_APP_API_URL=https://notes-api.${DOMAIN}
 
 # Build the app
 RUN npm run build

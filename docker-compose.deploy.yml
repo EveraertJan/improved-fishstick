@@ -2,7 +2,7 @@ services:
   # Traefik reverse proxy for HTTPS
   traefik:
     image: traefik:v3.0
-    container_name: traefik
+    container_name: notes-traefik
     command:
       - "--api.insecure=false"
       - "--providers.docker=true"
@@ -29,7 +29,7 @@ services:
 
   web:
     image: tastbaar/notes-web:latest
-    container_name: web
+    container_name: notes-web
     depends_on:
       - api
     networks:
@@ -54,7 +54,7 @@ services:
   # API Backend
   api:    
     image: tastbaar/notes-api:latest
-    container_name: api
+    container_name: notes-api
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DATABASE: ${POSTGRES_DATABASE}
@@ -93,7 +93,7 @@ services:
   # PostgreSQL Database
   db:
     image: "postgres:17-alpine"
-    container_name: db
+    container_name: notes-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DATABASE}
