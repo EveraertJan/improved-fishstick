@@ -12,11 +12,19 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }))
 const port = 3000;
 
 // CORS configuration - allow Firefox plugin and frontend
+const allowedOrigins = [
+  'http://localhost:3001',
+  /^moz-extension:\/\/.*$/
+];
+
+// Add production frontend URL if DOMAIN env variable is set
+if (process.env.DOMAIN && process.env.DOMAIN !== 'localhost') {
+  allowedOrigins.push(`https://notes.${process.env.DOMAIN}`);
+  allowedOrigins.push(`http://notes.${process.env.DOMAIN}`);
+}
+
 const corsOptions = {
-  origin: [
-    'http://localhost:3001',
-    /^moz-extension:\/\/.*$/
-  ],
+  origin: allowedOrigins,
   credentials: true,
   optionsSuccessStatus: 200
 };

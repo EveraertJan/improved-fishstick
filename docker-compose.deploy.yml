@@ -1,58 +1,33 @@
 services:
   # Traefik reverse proxy for HTTPS
-  traefik:
-    image: traefik:v3.0
-    container_name: notes-traefik
-    command:
-      - "--api.insecure=false"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      # Redirect HTTP to HTTPS (uncomment after SSL is working)
-      # - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      # - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./_volumes/letsencrypt:/letsencrypt
-    networks:
-      - backend
-    restart: unless-stopped
 
 
-  web:
+  nweb:
     image: tastbaar/notes-web:latest
     container_name: notes-web
     depends_on:
-      - api
+      - napi
     networks:
       - backend
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
       # HTTP router (for initial setup and ACME challenge)
-      - "traefik.http.routers.web-http.rule=Host(`notes.${DOMAIN}`)"
-      - "traefik.http.routers.web-http.entrypoints=web"
-      - "traefik.http.routers.web-http.service=web"
+      - "traefik.http.routers.nweb-http.rule=Host(`notes.${DOMAIN}`)"
+      - "traefik.http.routers.nweb-http.entrypoints=web"
+      - "traefik.http.routers.nweb-http.service=nweb"
       # HTTPS router
-      - "traefik.http.routers.web.rule=Host(`notes.${DOMAIN}`)"
-      - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.web.loadbalancer.server.port=80"
+      - "traefik.http.routers.nweb.rule=Host(`notes.${DOMAIN}`)"
+      - "traefik.http.routers.nweb.entrypoints=websecure"
+      - "traefik.http.routers.nweb.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nweb.loadbalancer.server.port=80"
       # Watchtower
       - "com.centurylinklabs.watchtower.enable=true"
 
 
 
   # API Backend
-  api:    
+  napi:
     image: tastbaar/notes-api:latest
     container_name: notes-api
     environment:
@@ -63,6 +38,7 @@ services:
       TOKEN_ENCRYPTION: ${TOKEN_ENCRYPTION}
       JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: production
+      DOMAIN: ${DOMAIN}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USER: ${SMTP_USER}
@@ -71,7 +47,7 @@ services:
       - ./_volumes/uploads:/usr/app/uploads
     command: npm run prod
     depends_on:
-      db:
+      ndb:
         condition: service_healthy
     networks:
       - backend
@@ -79,19 +55,19 @@ services:
     labels:
       - "traefik.enable=true"
       # HTTP router (for initial setup and ACME challenge)
-      - "traefik.http.routers.api-http.rule=Host(`notes-api.${DOMAIN}`)"
-      - "traefik.http.routers.api-http.entrypoints=web"
-      - "traefik.http.routers.api-http.service=api"
+      - "traefik.http.routers.napi-http.rule=Host(`notes-api.${DOMAIN}`)"
+      - "traefik.http.routers.napi-http.entrypoints=web"
+      - "traefik.http.routers.napi-http.service=napi"
       # HTTPS router
-      - "traefik.http.routers.api.rule=Host(`notes-api.${DOMAIN}`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.api.loadbalancer.server.port=3000"
+      - "traefik.http.routers.napi.rule=Host(`notes-api.${DOMAIN}`)"
+      - "traefik.http.routers.napi.entrypoints=websecure"
+      - "traefik.http.routers.napi.tls.certresolver=letsencrypt"
+      - "traefik.http.services.napi.loadbalancer.server.port=3000"
       # Watchtower
       - "com.centurylinklabs.watchtower.enable=true"
 
   # PostgreSQL Database
-  db:
+  ndb:
     image: "postgres:17-alpine"
     container_name: notes-db
     environment:
@@ -109,7 +85,7 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - 5432:5432
+      - 5433:5432
 
 
 
@@ -128,6 +104,3 @@ services:
     networks:
       - backend
 
-networks:
-  backend:
-    driver: bridge
