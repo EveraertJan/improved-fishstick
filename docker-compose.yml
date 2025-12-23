@@ -22,7 +22,9 @@ services:
       - backend
 
   frontend:
-    build: ./images/frontend
+    build:
+      context: ./images/frontend
+      dockerfile: Dockerfile.dev
     container_name: "${PROJECT_NAME}-frontend"
     ports:
       - 3001:3001
