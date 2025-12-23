@@ -13,14 +13,16 @@ const getAllItems = async (req, res) => {
       .select(
         'saved_items.*',
         'tags.id as tag_id',
-        'tags.name as tag_name'
+        'tags.name as tag_name',
+        'tags.color1 as tag_color1',
+        'tags.color2 as tag_color2'
       )
       .where({ 'saved_items.user_id': userId })
       .orderBy('saved_items.created_at', 'desc');
 
     // Aggregate results to group tags by item
     const itemsMap = new Map();
-    
+
     rows.forEach(row => {
       if (!itemsMap.has(row.id)) {
         itemsMap.set(row.id, {
@@ -30,12 +32,16 @@ const getAllItems = async (req, res) => {
         // Remove tag-related fields from main object
         delete itemsMap.get(row.id).tag_id;
         delete itemsMap.get(row.id).tag_name;
+        delete itemsMap.get(row.id).tag_color1;
+        delete itemsMap.get(row.id).tag_color2;
       }
-      
+
       if (row.tag_id) {
         itemsMap.get(row.id).tags.push({
           id: row.tag_id,
-          name: row.tag_name
+          name: row.tag_name,
+          color1: row.tag_color1,
+          color2: row.tag_color2
         });
       }
     });
@@ -64,7 +70,9 @@ const getItemById = async (req, res) => {
       .select(
         'saved_items.*',
         'tags.id as tag_id',
-        'tags.name as tag_name'
+        'tags.name as tag_name',
+        'tags.color1 as tag_color1',
+        'tags.color2 as tag_color2'
       )
       .where({ 'saved_items.id': id, 'saved_items.user_id': userId })
       .orderBy('tags.name', 'asc');
@@ -80,9 +88,17 @@ const getItemById = async (req, res) => {
         .filter(row => row.tag_id)
         .map(row => ({
           id: row.tag_id,
-          name: row.tag_name
+          name: row.tag_name,
+          color1: row.tag_color1,
+          color2: row.tag_color2
         }))
     };
+
+    // Remove tag-related fields from main object
+    delete item.tag_id;
+    delete item.tag_name;
+    delete item.tag_color1;
+    delete item.tag_color2;
 
     res.status(200).json({ item });
   } catch (error) {
@@ -181,6 +197,7 @@ const updateItem = async (req, res) => {
     if (author !== undefined) updateData.author = author;
     if (siteName !== undefined) updateData.site_name = siteName;
     if (articleText !== undefined) updateData.article_text = sanitizeArticleHtml(articleText);
+    if (req.body.is_read !== undefined) updateData.is_read = req.body.is_read;
 
     const [updatedItem] = await db('saved_items')
       .where({ id, user_id: userId })
@@ -384,6 +401,106 @@ const searchItems = async (req, res) => {
   }
 };
 
+const markAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    const existingItem = await db('saved_items')
+      .where({ id, user_id: userId })
+      .first();
+
+    if (!existingItem) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    const [updatedItem] = await db('saved_items')
+      .where({ id, user_id: userId })
+      .update({ is_read: true, updated_at: new Date() })
+      .returning('*');
+
+    res.status(200).json({
+      message: 'Item marked as read',
+      item: updatedItem
+    });
+  } catch (error) {
+    console.error('Mark as read error:', error);
+    res.status(500).json({ message: 'Server error marking item as read' });
+  }
+};
+
+const bulkMarkAsRead = async (req, res) => {
+  try {
+    const { itemIds } = req.body;
+    const userId = req.user.userId;
+
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.status(400).json({ message: 'Item IDs array is required' });
+    }
+
+    const updated = await db('saved_items')
+      .whereIn('id', itemIds)
+      .where('user_id', userId)
+      .update({ is_read: true, updated_at: new Date() });
+
+    res.status(200).json({
+      message: `${updated} items marked as read`,
+      count: updated
+    });
+  } catch (error) {
+    console.error('Bulk mark as read error:', error);
+    res.status(500).json({ message: 'Server error marking items as read' });
+  }
+};
+
+const bulkMarkAsUnread = async (req, res) => {
+  try {
+    const { itemIds } = req.body;
+    const userId = req.user.userId;
+
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.status(400).json({ message: 'Item IDs array is required' });
+    }
+
+    const updated = await db('saved_items')
+      .whereIn('id', itemIds)
+      .where('user_id', userId)
+      .update({ is_read: false, updated_at: new Date() });
+
+    res.status(200).json({
+      message: `${updated} items marked as unread`,
+      count: updated
+    });
+  } catch (error) {
+    console.error('Bulk mark as unread error:', error);
+    res.status(500).json({ message: 'Server error marking items as unread' });
+  }
+};
+
+const bulkDelete = async (req, res) => {
+  try {
+    const { itemIds } = req.body;
+    const userId = req.user.userId;
+
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.status(400).json({ message: 'Item IDs array is required' });
+    }
+
+    const deleted = await db('saved_items')
+      .whereIn('id', itemIds)
+      .where('user_id', userId)
+      .del();
+
+    res.status(200).json({
+      message: `${deleted} items deleted`,
+      count: deleted
+    });
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    res.status(500).json({ message: 'Server error deleting items' });
+  }
+};
+
 module.exports = {
   getAllItems,
   getItemById,
@@ -392,5 +509,9 @@ module.exports = {
   deleteItem,
   addItemTag,
   removeItemTag,
-  searchItems
+  searchItems,
+  markAsRead,
+  bulkMarkAsRead,
+  bulkMarkAsUnread,
+  bulkDelete
 };

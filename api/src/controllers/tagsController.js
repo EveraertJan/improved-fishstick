@@ -3,19 +3,17 @@ const { checkBodyFields } = require("../helpers/bodyHelpers");
 
 const createTag = async (req, res) => {
   try {
-    const { name } = req.body;
-    
+    const { name, color1, color2 } = req.body;
+
     if (!name || name.trim().length === 0) {
       return res.status(400).json({ error: 'Tag name is required' });
     }
 
-   
-    
     // Check if tag already exists for this user
     const existingTag = await db('tags')
       .where({ user_id: req.user.userId, name: name.trim() })
       .first();
-    
+
     if (existingTag) {
       return res.status(409).json({ error: 'Tag already exists' });
     }
@@ -24,7 +22,9 @@ const createTag = async (req, res) => {
     const [tag] = await db('tags')
       .insert({
         user_id: req.user.userId,
-        name: name.trim()
+        name: name.trim(),
+        color1: color1 || '#1e7ea5',
+        color2: color2 || '#17416e'
       })
       .returning('*');
 
@@ -77,7 +77,6 @@ const updateTag = async (req, res) => {
       return res.status(400).json({ error: 'Tag name is required' });
     }
 
-    const db = req.app.get('db');
     
     // Check if tag exists and belongs to user
     const existingTag = await db('tags')
@@ -120,7 +119,6 @@ const updateTag = async (req, res) => {
 const deleteTag = async (req, res) => {
   try {
     const { id } = req.params;
-    const db = req.app.get('db');
     
     // Check if tag exists and belongs to user
     const tag = await db('tags')
@@ -146,7 +144,6 @@ const deleteTag = async (req, res) => {
 const getItemsByTag = async (req, res) => {
   try {
     const { id } = req.params;
-    const db = req.app.get('db');
     
     // Check if tag exists and belongs to user
     const tag = await db('tags')

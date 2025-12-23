@@ -27,6 +27,10 @@ router.put('/api/saved-items/:id', decodeToken, savedItemsController.updateItem)
 router.delete('/api/saved-items/:id', decodeToken, savedItemsController.deleteItem);
 router.post('/api/saved-items/:id/tags', decodeToken, savedItemsController.addItemTag);
 router.delete('/api/saved-items/:id/tags/:tagId', decodeToken, savedItemsController.removeItemTag);
+router.patch('/api/saved-items/:id/read', decodeToken, savedItemsController.markAsRead);
+router.post('/api/saved-items/bulk/mark-read', decodeToken, savedItemsController.bulkMarkAsRead);
+router.post('/api/saved-items/bulk/mark-unread', decodeToken, savedItemsController.bulkMarkAsUnread);
+router.post('/api/saved-items/bulk/delete', decodeToken, savedItemsController.bulkDelete);
 
 // Tags routes (all protected)
 router.get('/api/tags', decodeToken, tagsController.getAllTags);

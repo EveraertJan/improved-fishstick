@@ -5,7 +5,9 @@ const routes = require("./routes");
 
 const app = express();
 http.Server(app);
-app.use(express.json())
+// Increase body size limit to handle large article content
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ limit: '10mb', extended: true }))
 
 const port = 3000;
 
