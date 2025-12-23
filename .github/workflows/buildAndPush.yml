@@ -46,24 +46,24 @@ jobs:
           cache-to: type=inline
 
 
-      - name: Extract metadata for Frontend
-        id: meta-frontend
+      - name: Extract metadata for web
+        id: meta-web
         uses: docker/metadata-action@v5
         with:
-          images: tastbaar/notes-frontend
+          images: tastbaar/notes-web
           tags: |
             type=raw,value=latest
             type=sha,prefix={{branch}}-
 
-      - name: Build and push Frontend image
+      - name: Build and push web image
         uses: docker/build-push-action@v5
         with:
-          context: ./images/frontend
-          file: ./images/frontend/Dockerfile
+          context: ./images/web
+          file: ./images/web/Dockerfile
           push: true
-          tags: ${{ steps.meta-frontend.outputs.tags }}
-          labels: ${{ steps.meta-frontend.outputs.labels }}
-          cache-from: type=registry,ref=tastbaar/notes-frontend:latest
+          tags: ${{ steps.meta-web.outputs.tags }}
+          labels: ${{ steps.meta-web.outputs.labels }}
+          cache-from: type=registry,ref=tastbaar/notes-web:latest
           cache-to: type=inline
           build-args: |
             DOMAIN=tastbaar.studio

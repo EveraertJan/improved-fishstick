@@ -27,9 +27,9 @@ services:
     restart: unless-stopped
 
 
-  frontend:
-    image: tastbaar/notes-frontend:latest
-    container_name: frontend
+  web:
+    image: tastbaar/notes-web:latest
+    container_name: web
     depends_on:
       - api
     networks:
@@ -38,14 +38,14 @@ services:
     labels:
       - "traefik.enable=true"
       # HTTP router (for initial setup and ACME challenge)
-      - "traefik.http.routers.frontend-http.rule=Host(`notes.${DOMAIN}`)"
-      - "traefik.http.routers.frontend-http.entrypoints=web"
-      - "traefik.http.routers.frontend-http.service=frontend"
+      - "traefik.http.routers.web-http.rule=Host(`notes.${DOMAIN}`)"
+      - "traefik.http.routers.web-http.entrypoints=web"
+      - "traefik.http.routers.web-http.service=web"
       # HTTPS router
-      - "traefik.http.routers.frontend.rule=Host(`notes.${DOMAIN}`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      - "traefik.http.routers.web.rule=Host(`notes.${DOMAIN}`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.web.loadbalancer.server.port=80"
       # Watchtower
       - "com.centurylinklabs.watchtower.enable=true"
 
