@@ -3,7 +3,7 @@ services:
 
       
   api:
-    build: ./api
+    build: ./images/api
     container_name: "${PROJECT_NAME}-api"
     ports:
       - 3000:3000
@@ -22,7 +22,7 @@ services:
       - backend
 
   frontend:
-    build: ./frontend
+    build: ./images/frontend
     container_name: "${PROJECT_NAME}-frontend"
     ports:
       - 3001:3001
