@@ -14,7 +14,7 @@ services:
       POSTGRES_HOST: db
       JWT_SECRET:
     volumes:
-      - ./api/src:/usr/app/src
+      - ./images/api/src:/usr/app/src
     depends_on:
       db:
         condition: service_healthy
@@ -31,8 +31,8 @@ services:
     environment:
       REACT_APP_API_URL: http://localhost:3000
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
+      - ./images/frontend/src:/app/src
+      - ./images/frontend/public:/app/public
     depends_on:
       - api
     networks:
